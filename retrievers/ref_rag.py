@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from rag import Retriever
+from retrievers.rag import Retriever
 
 class REFRAGRetriever(Retriever):
     """
