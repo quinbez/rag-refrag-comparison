@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union, Dict
 from retrievers.rag import Retriever
 
 class REFRAGRetriever(Retriever):
@@ -11,7 +11,7 @@ class REFRAGRetriever(Retriever):
         Inherits all attributes from the `Retriever` class.
     """
 
-    def search(self, query: str, k: int = 3) -> List[Tuple[str, float]]:
+    def search(self, query: str, k: int = 3) -> List[Tuple[Union[Dict, str], float]]:
         """
         Searches for documents relevant to a given query and re-ranks them
         based on inverse-distance scores.
