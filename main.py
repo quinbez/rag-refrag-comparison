@@ -77,30 +77,78 @@ def load_or_create_retrievers(docs):
         print(f"ERROR: Failed to load/create retrievers: {e}")
         sys.exit(1)
 
+
+def run_query(query, retriever, refrag_retriever, llm):
+    """Run a query with error handling"""
+    
+    if not query or not query.strip():
+        print("ERROR: Empty query provided")
+        return None, None
+    try:
+        # RAG
+        start = time.time()
+        rag_answer = rag_pipeline(query, retriever, llm)
+        rag_time = time.time() - start
+    except Exception as e:
+        print(f"ERROR in RAG pipeline: {e}")
+        rag_answer = f"RAG Error: {str(e)}"
+        rag_time = 0.0
+    
+    try:
+        # REFRAG
+        start = time.time()
+        refrag_answer = refrag_pipeline(query, refrag_retriever, llm)
+        refrag_time = time.time() - start
+    except Exception as e:
+        print(f"ERROR in REFRAG pipeline: {e}")
+        refrag_answer = f"REFRAG Error: {str(e)}"
+        refrag_time = 0.0
+    
+    return {
+        'query': query,
+        'rag_answer': rag_answer,
+        'rag_time': rag_time,
+        'refrag_answer': refrag_answer,
+        'refrag_time': refrag_time
+    }
+
+
 if __name__ == "__main__":
-    print("===== RAG vs REFRAG Comparison =====")
+    print("="*80)
+    print("RAG vs REFRAG Comparison")
+    print("="*80)
 
-    # Load dataset
-    docs = load_docs()
-    doc_texts = [f"{doc['title']} {doc['description']}" for doc in docs]
+    try:
+        # Load dataset
+        docs = load_docs()
+        doc_texts = [f"{doc['title']} {doc['description']}" for doc in docs]
 
-    retriever, refrag_retriever = load_or_create_retrievers(docs)
-    llm = Generator(model_name="google/flan-t5-small")
+        retriever, refrag_retriever = load_or_create_retrievers(docs)
+        llm = Generator(model_name="google/flan-t5-small")
 
-    query = "What is the main drawback of standard RAG when dealing with many documents?"
+        query = "What is the main drawback of standard RAG when dealing with many documents?"
 
-    # ---- RAG ----
-    start = time.time()
-    rag_answer = rag_pipeline(query, retriever, llm)
-    rag_time = time.time() - start
-    print("\nRAG Answer:\n", rag_answer)
-    print(f"RAG Time: {rag_time:.2f}s")
+        result = run_query(query, retriever, refrag_retriever, llm)
 
-    # ---- REFRAG ----
-    start = time.time()
-    refrag_answer = refrag_pipeline(query, refrag_retriever, llm)
-    refrag_time = time.time() - start
-    print("\nREFRAG Answer:\n", refrag_answer)
-    print(f"REFRAG Time: {refrag_time:.2f}s")
+        if result:
+            print("\n" + "="*80)
+            print("RESULTS SUMMARY")
+            print("="*80)
+            print(f"Query: {result['query']}")
+            print(f"\nRAG: {result['rag_answer']}")
+            print(f"Time: {result['rag_time']:.2f}s")
+            print(f"\nREFRAG: {result['refrag_answer']}")
+            print(f"Time: {result['refrag_time']:.2f}s")
+        
+        print("\n" + "="*80)
+        print("Execution completed successfully!")
+        print("="*80)
 
-    print(f"\nComparison: RAG={rag_time:.2f}s | REFRAG={refrag_time:.2f}s")
+    except KeyboardInterrupt:
+        print("\n\nExecution interrupted by user")
+        sys.exit(0)
+    except Exception as e:
+        print(f"\n\nFATAL ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
