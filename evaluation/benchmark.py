@@ -4,12 +4,13 @@ from pipelines.rag_pipeline import rag_pipeline
 from pipelines.ref_rag_pipeline import refrag_pipeline
 from .metrics import exact_match, f1_score
 
-def run_query(query, retriever, refrag_retriever, llm):
+def run_query(query, retriever, refrag_retriever, llm, ground_truth=None):
     """Run a query with error handling"""
     
     if not query or not query.strip():
         print("ERROR: Empty query provided")
         return None, None
+    
     try:
         # RAG
         start = time.time()
@@ -30,12 +31,25 @@ def run_query(query, retriever, refrag_retriever, llm):
         refrag_answer = f"REFRAG Error: {str(e)}"
         refrag_time = 0.0
     
+    # Compute metrics if ground truth is provided
+    if ground_truth:
+        rag_em = exact_match(rag_answer, ground_truth)
+        refrag_em = exact_match(refrag_answer, ground_truth)
+        rag_f1_val = f1_score(rag_answer, ground_truth)
+        refrag_f1_val = f1_score(refrag_answer, ground_truth)
+    else:
+        rag_em = refrag_em = rag_f1_val = refrag_f1_val = 0
+
     return {
         'query': query,
         'rag_answer': rag_answer,
         'rag_time': rag_time,
         'refrag_answer': refrag_answer,
-        'refrag_time': refrag_time
+        'refrag_time': refrag_time,
+        'rag_em': rag_em,
+        'refrag_em': refrag_em,
+        'rag_f1': rag_f1_val,
+        'refrag_f1': refrag_f1_val
     }
 
 def display_results_table(total_queries, rag_time, rag_em, rag_f1, refrag_time, refrag_em, refrag_f1):
@@ -70,7 +84,7 @@ def run_benchmark(validation_set, retriever, refrag_retriever, llm, max_queries=
     queries_to_run = validation_set if max_queries is None else validation_set[:max_queries]
 
     for i, item in enumerate(queries_to_run, 1):
-        result = run_query(item["query"], retriever, refrag_retriever, llm)
+        result = run_query(item["query"], retriever, refrag_retriever, llm, ground_truth=item["ground_truth"])
         results.append(result)
 
         # Accumulate times
