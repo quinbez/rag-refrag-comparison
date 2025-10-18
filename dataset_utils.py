@@ -26,10 +26,8 @@ def load_train_docs(force_reload=False):
 
     # Try to load from cache
     if not force_reload and os.path.exists(cache_file):
-        print(f"Loading documents from cache: {cache_file}")
         with open(cache_file, 'rb') as f:
             docs = pickle.load(f)
-        print(f"    Loaded {len(docs)} documents from cache!")
         return docs
     
     print("Loading TriviaQA training set from HuggingFace (this may take a while)...")
@@ -78,7 +76,6 @@ def load_validation_set(num_samples=None, force_reload=False):
     cache_file = os.path.join(CACHE_DIR, f"trivia_qa_validation_{num_samples or 'all'}.pkl")
     
     if not force_reload and os.path.exists(cache_file):
-        print(f"Loading validation set from cache: {cache_file}")
         with open(cache_file, "rb") as f:
             return pickle.load(f)
     
