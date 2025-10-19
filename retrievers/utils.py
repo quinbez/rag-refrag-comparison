@@ -25,7 +25,16 @@ def load_or_create_retrievers(docs):
             doc_texts = [f"{doc['title']} {doc['description']}" for doc in docs]
             
             retriever = Retriever(docs, doc_texts)
-            refrag_retriever = REFRAGRetriever(docs, doc_texts)
+            refrag_retriever = REFRAGRetriever(
+                docs, 
+                doc_texts,
+                token_model="sentence-transformers/all-MiniLM-L6-v2",
+                compressed_dim=128,
+                use_pretrained_policy=False,
+                policy_path=None,
+                score_threshold=0.5,
+                diversity_threshold=0.7
+            )
             
             # Save to cache
             print("Saving retrievers to cache...")
