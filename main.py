@@ -8,7 +8,7 @@ from evaluation.visualize import plot_rag_vs_refrag
 if __name__ == "__main__":
     try:
         # Load dataset
-        docs = load_train_docs()
+        docs = load_train_docs(max_samples=10000)
         validation_set = load_validation_set(num_samples=50) 
         retriever, refrag_retriever = load_or_create_retrievers(docs)
         llm = Generator(model_name="google/flan-t5-small")
